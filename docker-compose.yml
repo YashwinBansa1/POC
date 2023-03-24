@@ -1,0 +1,53 @@
+version: "2"
+services:
+  mysqldb:
+    container_name: mysqlcontainerforapp
+    image: mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    # volume:
+    #   - $HOME/database:/var/lib/mysql
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+    environment:
+      MYSQL_DATABASE: blog_app_apis 
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: 1234
+      SERVICE_TAGS: prod 
+      SERVICE_NAME: mysqldb
+    networks:
+      - apinetwork
+
+  blogapplication:
+    container_name: blogapplicationcontainer
+    build: .
+    image: blogapplication
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    # volume:
+    #   - $HOME/database:/var/lib/mysql
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/blog_app_apis 
+      SPRING_DATASOURCE_USERNAME: 'root'
+      SPRING_DATASOURCE_PASSWORD: '1234'
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: 'com.mysql.cj.jdbc.Driver'
+      spring.jpa.properties.hibernate.dialect: 'org.hibernate.dialect.MySQL8Dialect'
+      SPRING_JPA_HIBERNATE_DDL-AUTO: 'update'
+      SPRING_JPA_SHOW-SQL: 'true'
+      SERVICE_TAGS: prod 
+      SERVICE_NAME: blogapi
+    depends_on:
+      - mysqldb
+    networks:
+      - apinetwork
+
+networks:
+  apinetwork:
+    driver: bridge
